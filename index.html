@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Трекер официанта — Александр</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1c1c1e;
+      --bg-surface: #1e1e20;
+      --bg-input: #161618;
+      --text: #ffffff;
+      --text-secondary: #8e8e93;
+      --accent: #0a84ff;
+      --accent-soft: rgba(10, 132, 255, 0.28);
+      --accent-neo: #0a5eb8;
+      --gold: #ffb340;
+      --gold-soft: rgba(255, 179, 64, 0.2);
+      --tips-high: #30d158;
+      --danger: #ff453a;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --shadow-raised:
+        4px 4px 8px rgba(0, 0, 0, 0.45),
+        -3px -3px 7px rgba(255, 255, 255, 0.07);
+      --shadow-raised-sm:
+        3px 3px 6px rgba(0, 0, 0, 0.4),
+        -2px -2px 5px rgba(255, 255, 255, 0.06);
+      --shadow-inset:
+        inset 4px 4px 8px rgba(0, 0, 0, 0.45),
+        inset -3px -3px 7px rgba(255, 255, 255, 0.05);
+      --shadow-inset-sm:
+        inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+        inset -2px -2px 4px rgba(255, 255, 255, 0.04);
+      --transition-neo: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    body {
+      font-family: var(--font);
+      background: linear-gradient(165deg, #1c1c1e 0%, #18181a 45%, #1a1a1c 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.45;
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) 1rem calc(5rem + env(safe-area-inset-bottom));
+    }
+
+    body.mode-archive .neo-panel { opacity: 0.92; }
+    body.mode-future .neo-panel { opacity: 0.95; }
+
+    .app { max-width: 680px; margin: 0 auto; }
+
+    /* —— Neumorphism: базовые классы —— */
+    .neo-convex {
+      background: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-raised);
+      transition: var(--transition-neo);
+    }
+
+    .neo-convex-surface {
+      background: var(--bg-surface);
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-raised);
+      transition: var(--transition-neo);
+    }
+
+    .neo-inset {
+      background: var(--bg-input);
+      border: none;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-inset);
+      transition: var(--transition-neo);
+    }
+
+    .neo-pressed,
+    .neo-convex:active:not(:disabled),
+    .neo-btn:active:not(:disabled) {
+      box-shadow: var(--shadow-inset) !important;
+      transform: scale(0.98);
+    }
+
+    .neo-panel,
+    .glass-panel {
+      background: var(--bg-surface);
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-raised);
+      transition: var(--transition-neo);
+    }
+
+    .toast-container {
+      position: fixed;
+      top: max(1rem, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      width: min(90vw, 360px);
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-surface);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-raised);
+      margin-bottom: 0.5rem;
+      animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    header {
+      text-align: center;
+      padding: 1.25rem 0 1rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-sub {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .rank-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.6rem;
+      padding: 0.4rem 0.9rem;
+      background: var(--bg);
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-raised-sm);
+    }
+
+    .segmented {
+      display: flex;
+      padding: 4px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-inset);
+    }
+
+    .segmented button {
+      flex: 1;
+      padding: 0.55rem;
+      border: none;
+      background: transparent;
+      font-family: var(--font);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition-neo);
+    }
+
+    .segmented button.active {
+      background: var(--bg-input);
+      color: var(--text);
+      box-shadow: var(--shadow-inset-sm);
+    }
+
+    .segmented button:active:not(.active) {
+      box-shadow: var(--shadow-inset-sm);
+    }
+
+    .tab-panel { display: none; animation: fadeIn 0.25s ease; }
+    .tab-panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 520px) {
+      .stats-row { grid-template-columns: 1fr; }
+    }
+
+    .stat-widget {
+      padding: 0.85rem 0.75rem;
+      text-align: center;
+    }
+
+    .stat-widget .label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      margin-bottom: 0.35rem;
+      line-height: 1.3;
+    }
+
+    .stat-widget .value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .stat-widget.all-time .value { color: var(--text); font-size: 1.05rem; }
+
+    .forecast-widget {
+      padding: 1rem 1.15rem;
+      margin-bottom: 1rem;
+    }
+
+    .forecast-widget .forecast-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .forecast-widget p {
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+
+    .forecast-widget p strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .forecast-widget p.muted {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .settings-inline {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .settings-inline label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .neo-input,
+    input[type="number"],
+    input[type="date"],
+    input[type="text"] {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg-input);
+      border: none;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-inset);
+      transition: var(--transition-neo);
+    }
+
+    .neo-input:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus {
+      outline: none;
+      box-shadow: var(--shadow-inset), 0 0 0 2px rgba(10, 132, 255, 0.35);
+    }
+
+    .settings-inline input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .neo-btn {
+      font-family: var(--font);
+      cursor: pointer;
+      border: none;
+      background: var(--bg);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-raised);
+      transition: var(--transition-neo);
+    }
+
+    .neo-btn:active:not(:disabled) {
+      box-shadow: var(--shadow-inset);
+      transform: scale(0.98);
+    }
+
+    .month-nav-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: var(--accent);
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-raised-sm);
+    }
+
+    .month-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .mode-chip {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .mode-chip.archive { color: #c9a227; }
+    .mode-chip.future { color: #64b5f6; }
+
+    .btn-text-link {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 0.75rem;
+      padding: 0.5rem;
+      background: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-family: var(--font);
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-raised-sm);
+      transition: var(--transition-neo);
+    }
+
+    .btn-text-link:active {
+      box-shadow: var(--shadow-inset);
+    }
+
+    .calendar-wrap {
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: var(--bg);
+      box-shadow: var(--shadow-inset);
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .cal-weekdays span {
+      text-align: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .cal-day {
+      position: relative;
+      aspect-ratio: 1;
+      min-height: 56px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: var(--font);
+      cursor: pointer;
+      padding: 3px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      text-align: left;
+      box-shadow: none;
+      transition: var(--transition-neo);
+    }
+
+    .cal-day .record-badge {
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      font-size: 0.7rem;
+      line-height: 1;
+      z-index: 2;
+    }
+
+    .cal-day.empty { cursor: pointer; }
+    .cal-day.empty:active { box-shadow: var(--shadow-inset-sm); background: var(--bg-input); }
+
+    .cal-day.other-month { visibility: hidden; pointer-events: none; }
+
+    .cal-day .num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .cal-day.has-shift {
+      background: var(--accent-soft);
+      box-shadow: var(--shadow-raised-sm);
+    }
+
+    .cal-day.has-shift .num { color: var(--accent); }
+
+    .cal-day.today {
+      background: var(--bg);
+      box-shadow: var(--shadow-raised-sm);
+      outline: 1px solid rgba(255, 255, 255, 0.35);
+      outline-offset: -1px;
+    }
+
+    .cal-day.today.has-shift {
+      outline: 1px solid rgba(255, 255, 255, 0.45);
+      background: var(--accent-soft);
+    }
+
+    .cal-day.record-day.has-shift {
+      background: linear-gradient(145deg, var(--gold-soft), var(--accent-soft));
+      box-shadow: var(--shadow-raised-sm), 0 0 0 1px rgba(255, 179, 64, 0.35);
+    }
+
+    .cal-day.has-shift:active,
+    .cal-day.today:active {
+      box-shadow: var(--shadow-inset-sm);
+    }
+
+    .cal-day .shift-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-height: 0;
+    }
+
+    .cal-day .shift-info .tips-amount {
+      color: var(--text);
+      font-weight: 700;
+      font-size: clamp(0.75rem, 2.8vw, 1rem);
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cal-day .shift-info .tips-amount.high {
+      color: var(--tips-high);
+    }
+
+    .cal-day .shift-info .day-total {
+      color: var(--text-secondary);
+      font-size: 0.55rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (min-width: 400px) {
+      .cal-day { min-height: 72px; padding: 4px 5px; }
+      .cal-day .shift-info .tips-amount { font-size: 1rem; }
+      .cal-day .shift-info .day-total { font-size: 0.6rem; }
+      .cal-day .num { font-size: 0.75rem; }
+      .cal-day .record-badge { font-size: 0.75rem; }
+    }
+
+    @media (min-width: 520px) {
+      .cal-day .shift-info .tips-amount { font-size: 1.05rem; }
+    }
+
+    .go-section {
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .go-section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .go-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+
+    .go-row input {
+      flex: 1;
+      padding: 0.65rem 0.8rem;
+      font-size: 1rem;
+    }
+
+    .go-saved {
+      margin-top: 0.65rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .go-saved strong { color: var(--text); }
+
+    .neo-btn-accent,
+    .btn-primary {
+      padding: 0.65rem 1.15rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.4),
+        -2px -2px 6px rgba(255, 255, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: var(--transition-neo);
+    }
+
+    .neo-btn-accent:active:not(:disabled),
+    .btn-primary:active:not(:disabled) {
+      box-shadow:
+        inset 3px 3px 6px rgba(0, 0, 0, 0.5),
+        inset -2px -2px 4px rgba(255, 255, 255, 0.06) !important;
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-secondary {
+      padding: 0.7rem 1rem;
+      width: 100%;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      margin-top: 1rem;
+    }
+
+    .fab {
+      position: fixed;
+      right: max(1.25rem, env(safe-area-inset-right));
+      bottom: max(1.25rem, env(safe-area-inset-bottom));
+      width: 58px;
+      height: 58px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.85rem;
+      font-weight: 300;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow:
+        6px 6px 14px rgba(0, 0, 0, 0.5),
+        -3px -3px 10px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: var(--transition-neo);
+    }
+
+    .fab:active {
+      box-shadow: var(--shadow-inset) !important;
+      transform: scale(0.96);
+    }
+
+    .fab.hidden { display: none; }
+
+    .neo-progress {
+      height: 6px;
+      margin-top: 0.4rem;
+      border-radius: 99px;
+      background: var(--bg-input);
+      box-shadow: var(--shadow-inset-sm);
+      overflow: hidden;
+    }
+
+    .neo-progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--accent);
+      box-shadow: var(--shadow-raised-sm);
+      transition: width 0.3s ease;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      border: none;
+      border-radius: var(--radius);
+      box-shadow:
+        8px 8px 20px rgba(0, 0, 0, 0.55),
+        -4px -4px 12px rgba(255, 255, 255, 0.05);
+      padding: 1.25rem;
+      transform: scale(0.94);
+      opacity: 0;
+      transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.25s ease, box-shadow 0.2s ease;
+    }
+
+    .modal-backdrop.open .modal {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .modal h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .modal .field { margin-bottom: 0.85rem; }
+
+    .modal label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.3rem;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 0.65rem 0.8rem;
+      font-size: 1rem;
+    }
+
+    .day-hint {
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 0.25rem;
+    }
+
+    .detail-rows { margin: 1rem 0; }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.55rem 0.65rem;
+      margin-bottom: 0.35rem;
+      border-radius: 10px;
+      background: var(--bg-input);
+      box-shadow: var(--shadow-inset-sm);
+      font-size: 0.9rem;
+    }
+
+    .detail-rows .detail-row:last-child { margin-bottom: 0; }
+    .detail-row.total { font-weight: 700; font-size: 1rem; color: var(--accent); }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .achievements-section { padding: 1rem; margin-bottom: 1rem; }
+
+    .achievements-section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.6rem;
+    }
+
+    .achievement-card {
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      box-shadow: var(--shadow-raised-sm);
+      border: none;
+      transition: opacity 0.2s, box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    @media (hover: hover) {
+      .achievement-card:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          5px 5px 12px rgba(0, 0, 0, 0.5),
+          -3px -3px 8px rgba(255, 255, 255, 0.08);
+        background: var(--bg-surface);
+      }
+      .achievement-card.unlocked:hover {
+        box-shadow:
+          6px 6px 14px rgba(0, 0, 0, 0.55),
+          -3px -3px 9px rgba(255, 255, 255, 0.09),
+          0 0 20px rgba(10, 132, 255, 0.12);
+      }
+    }
+
+    .achievement-card:active {
+      transform: scale(0.98);
+      box-shadow: var(--shadow-inset-sm);
+    }
+
+    .achievement-card.locked { opacity: 0.45; box-shadow: var(--shadow-inset-sm); }
+    .achievement-card.unlocked {
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-raised);
+    }
+
+    .achievement-card .icon { font-size: 1.4rem; }
+    .achievement-card .name { font-size: 0.65rem; font-weight: 600; margin-top: 0.3rem; line-height: 1.2; }
+    .achievement-card .caption {
+      font-size: 0.55rem;
+      color: var(--text-secondary);
+      margin-top: 0.35rem;
+      line-height: 1.25;
+      font-style: italic;
+    }
+    .achievement-card .badge-eternal {
+      display: inline-block;
+      font-size: 0.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      margin-top: 0.25rem;
+      opacity: 0.9;
+    }
+    .achievement-card .progress-text { font-size: 0.55rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+    .achievements-hint {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .shift-templates {
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .shift-templates h3 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 0.65rem;
+    }
+
+    .shift-templates-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.45rem;
+    }
+
+    @media (max-width: 400px) {
+      .shift-templates-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+    }
+
+    .shift-template-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.15rem;
+      padding: 0.55rem 0.35rem;
+      min-height: 52px;
+      font-family: var(--font);
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--text);
+      box-shadow: var(--shadow-raised-sm);
+      transition: var(--transition-neo);
+    }
+
+    .shift-template-btn .tpl-hours {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .shift-template-btn .tpl-label {
+      font-size: 0.55rem;
+      color: var(--text-secondary);
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .shift-template-btn:active {
+      box-shadow: var(--shadow-inset-sm);
+      transform: scale(0.97);
+    }
+
+    .cal-day .ach-icons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      justify-content: flex-end;
+      margin-top: auto;
+      padding-top: 2px;
+      max-width: 100%;
+    }
+
+    .cal-day .ach-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      line-height: 1;
+      padding: 2px 3px;
+      border-radius: 4px;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-raised-sm);
+    }
+
+    @media (min-width: 400px) {
+      .cal-day .ach-icon { font-size: 0.62rem; }
+    }
+
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3000;
+      overflow: hidden;
+    }
+
+    .confetti-particle {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      opacity: 0;
+      animation: confettiBurst 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    @keyframes confettiBurst {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(0.3);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <div class="app">
+    <header>
+      <h1>Трекер официанта</h1>
+      <p class="header-sub">Александр</p>
+      <div class="rank-pill" id="rank-badge">🐣 Новичок · 0 смен</div>
+    </header>
+
+    <div class="segmented" role="tablist">
+      <button type="button" class="active" data-tab="calendar" role="tab" aria-selected="true">Календарь</button>
+      <button type="button" data-tab="achievements" role="tab" aria-selected="false">Достижения</button>
+    </div>
+
+    <div id="panel-calendar" class="tab-panel active" role="tabpanel">
+      <div class="stats-row">
+        <div class="glass-panel stat-widget">
+          <div class="label" id="stat-month-label">Заработано</div>
+          <div class="value" id="stat-month">0 ₽</div>
+        </div>
+        <div class="glass-panel stat-widget">
+          <div class="label">Гоу-лист</div>
+          <div class="value" id="stat-go">0 ₽</div>
+        </div>
+        <div class="glass-panel stat-widget all-time">
+          <div class="label">Всего за всё время</div>
+          <div class="value" id="stat-all">0 ₽</div>
+        </div>
+      </div>
+
+      <div class="glass-panel forecast-widget" id="forecast-widget">
+        <div class="forecast-title">Прогноз до конца месяца</div>
+        <p id="forecast-text">—</p>
+      </div>
+
+      <div class="glass-panel settings-inline">
+        <label for="hourly-rate">Ставка/час</label>
+        <input type="number" class="neo-input" id="hourly-rate" min="0" step="10" placeholder="250">
+      </div>
+
+      <div class="glass-panel shift-templates" id="shift-templates">
+        <h3>Быстрая смена</h3>
+        <div class="shift-templates-row">
+          <button type="button" class="shift-template-btn neo-btn" data-hours="6" data-label="Короткая" aria-label="Короткая смена, 6 часов">
+            <span class="tpl-hours">6 ч</span>
+            <span class="tpl-label">короткая</span>
+          </button>
+          <button type="button" class="shift-template-btn neo-btn" data-hours="7" data-label="Короткая" aria-label="Короткая смена, 7 часов">
+            <span class="tpl-hours">7 ч</span>
+            <span class="tpl-label">короткая</span>
+          </button>
+          <button type="button" class="shift-template-btn neo-btn" data-hours="12" data-label="Стандарт" aria-label="Стандартная смена, 12 часов">
+            <span class="tpl-hours">12 ч</span>
+            <span class="tpl-label">стандарт</span>
+          </button>
+          <button type="button" class="shift-template-btn neo-btn" data-hours="13" data-label="Длинная" aria-label="Длинная смена, 13 часов">
+            <span class="tpl-hours">13 ч</span>
+            <span class="tpl-label">длинная</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-panel month-nav">
+        <button type="button" class="month-nav-btn neo-btn" id="month-prev" aria-label="Предыдущий месяц">◀</button>
+        <span class="month-title" id="month-title">—</span>
+        <button type="button" class="month-nav-btn neo-btn" id="month-next" aria-label="Следующий месяц">▶</button>
+      </div>
+
+      <p class="mode-chip" id="mode-chip" hidden></p>
+      <button type="button" class="btn-text-link" id="back-to-current" hidden>Вернуться к текущему месяцу</button>
+
+      <div class="glass-panel calendar-wrap" id="calendar-panel">
+        <div class="cal-weekdays">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div class="glass-panel go-section" id="go-section">
+        <h3>Гоу-лист</h3>
+        <div class="go-row">
+          <input type="number" class="neo-input" id="go-amount" min="0" step="100" placeholder="Сумма (руб.)">
+          <button type="button" class="btn-primary neo-btn-accent" id="save-go-btn">Сохранить</button>
+        </div>
+        <p class="go-saved">Сохранено за месяц: <strong id="go-saved-display">0 ₽</strong></p>
+      </div>
+    </div>
+
+    <div id="panel-achievements" class="tab-panel" role="tabpanel">
+      <div class="glass-panel achievements-section">
+        <h3>🏆 Достижения</h3>
+        <p class="achievements-hint">Месячные ачивки сбрасываются 1-го числа. «Спонсор» и «Последний трек» — навсегда.</p>
+        <div class="achievements-grid" id="achievements-grid"></div>
+      </div>
+      <button type="button" class="btn-secondary neo-btn btn-danger neo-panel" id="reset-all-btn" style="width:100%;padding:1rem;">
+        Сбросить все данные
+      </button>
+    </div>
+  </div>
+
+  <button type="button" class="fab neo-btn-accent" id="fab-add" aria-label="Добавить смену">+</button>
+
+  <div class="modal-backdrop" id="modal-add" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="modal-add-title">
+      <h3 id="modal-add-title">Новая смена</h3>
+      <div class="field">
+        <label for="add-date">Дата</label>
+        <input type="date" class="neo-input" id="add-date">
+        <p class="day-hint" id="add-day-hint"></p>
+      </div>
+      <div class="field">
+        <label for="add-hours">Длительность (часов)</label>
+        <input type="number" class="neo-input" id="add-hours" min="0.5" step="0.5" value="12">
+      </div>
+      <div class="field">
+        <label for="add-tips">Чаевые (руб.)</label>
+        <input type="number" class="neo-input" id="add-tips" min="0" step="50" placeholder="0">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary neo-btn-accent" id="confirm-add-btn">Сохранить</button>
+        <button type="button" class="btn-secondary neo-btn" data-close="modal-add">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-detail" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="modal-detail-title">
+      <h3 id="modal-detail-title">Смена</h3>
+      <div class="detail-rows" id="detail-rows"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary neo-btn btn-danger" id="delete-shift-btn">Удалить смену</button>
+        <button type="button" class="btn-secondary neo-btn" data-close="modal-detail">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "waiter-tracker-alexander";
+
+    const WEEKDAYS_FULL = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
+    const MONTHS = [
+      "январе", "феврале", "марте", "апреле", "мае", "июне",
+      "июле", "августе", "сентябре", "октябре", "ноябре", "декабре"
+    ];
+    const MONTHS_NOM = [
+      "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+      "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+    ];
+    const MONTHS_GEN = [
+      "января", "февраля", "марта", "апреля", "мая", "июня",
+      "июля", "августа", "сентября", "октября", "ноября", "декабря"
+    ];
+
+    const PERMANENT_ACHIEVEMENTS = ["sponsor", "last-track"];
+
+    const ACHIEVEMENTS = [
+      { id: "first-shift", icon: "🌱", name: "Первая смена", desc: "1 смена", caption: "Ты в игре, братан." },
+      { id: "five-shifts", icon: "📅", name: "Пятидневка", desc: "5 смен", caption: "Это уже не случайность." },
+      { id: "ten-shifts", icon: "🔟", name: "Десятка", desc: "10 смен", caption: "Двузначка пошла, красава." },
+      { id: "tips-rain", icon: "🌧️", name: "Чаевый дождь", desc: "чаевые > 3000 ₽", caption: "Сегодня ты сорвал куш." },
+      { id: "golden-tray", icon: "🥇", name: "Золотой поднос", desc: "чаевые > 5000 ₽", caption: "Поднос улетел с золотом." },
+      { id: "week-streak", icon: "🔥", name: "Бессменный", desc: "7 дней подряд", caption: "Неделя на максималках." },
+      { id: "go-million", icon: "💎", name: "Гоу-лист на миллион", desc: "гоу-листы > 10 000 ₽", caption: "Гоу-лист уже не шутки." },
+      { id: "hello-world", icon: "👋", name: "Hello, World", desc: "заработок > 50 000 ₽", caption: "50к — уважение получено." },
+      { id: "production", icon: "🚀", name: "Продакшн", desc: "заработок > 100 000 ₽", caption: "Ты в проде, брат." },
+      { id: "soundtrack", icon: "🎵", name: "Саундтрек к смене", desc: "15 смен", caption: "Плейлист смены на полную." },
+      { id: "bug-report", icon: "🐛", name: "Баг-репорт", desc: "чаевые < 500 ₽", caption: "Бывает, завтра отыграешь." },
+      { id: "last-track", icon: "🏁", name: "Последний трек", desc: "30 смен", caption: "Тридцатка — ты в легендах.", eternal: true },
+      { id: "sponsor", icon: "💰", name: "Спонсор", desc: "заработок > 200 000 ₽", caption: "Твой счёт уже серьёзный.", eternal: true },
+    ];
+
+    const RANKS = [
+      { min: 0, max: 5, label: "🐣 Новичок" },
+      { min: 6, max: 15, label: "🥷 Боец" },
+      { min: 16, max: 30, label: "🛡️ Ветеран" },
+      { min: 31, max: Infinity, label: "👑 Легенда" },
+    ];
+
+    let data = {
+      hourlyRate: 250,
+      shifts: [],
+      monthlyGoList: {},
+      permanentAchievements: [],
+      monthlyAchievements: {},
+      achievementLog: [],
+    };
+    let viewYear, viewMonth;
+    let selectedShiftId = null;
+    let addHoursManual = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function getNow() {
+      const n = new Date();
+      return { year: n.getFullYear(), month: n.getMonth() };
+    }
+
+    function getViewMonthKey() {
+      return viewYear + "-" + String(viewMonth + 1).padStart(2, "0");
+    }
+
+    function getCurrentMonthKey() {
+      const n = new Date();
+      return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0");
+    }
+
+    function isPermanentAchievement(id) {
+      return PERMANENT_ACHIEVEMENTS.includes(id);
+    }
+
+    function migrateAchievements(parsed) {
+      const permanentAchievements = Array.isArray(parsed.permanentAchievements)
+        ? [...parsed.permanentAchievements]
+        : [];
+      const monthlyAchievements =
+        parsed.monthlyAchievements && typeof parsed.monthlyAchievements === "object"
+          ? { ...parsed.monthlyAchievements }
+          : {};
+      const achievementLog = Array.isArray(parsed.achievementLog) ? [...parsed.achievementLog] : [];
+      const monthKey = getCurrentMonthKey();
+
+      if (Array.isArray(parsed.achievements)) {
+        parsed.achievements.forEach((id) => {
+          if (isPermanentAchievement(id)) {
+            if (!permanentAchievements.includes(id)) permanentAchievements.push(id);
+          } else {
+            if (!monthlyAchievements[monthKey]) monthlyAchievements[monthKey] = [];
+            if (!monthlyAchievements[monthKey].includes(id)) monthlyAchievements[monthKey].push(id);
+          }
+        });
+      }
+
+      return { permanentAchievements, monthlyAchievements, achievementLog };
+    }
+
+    function hasAchievement(id, monthKey) {
+      if (isPermanentAchievement(id)) return data.permanentAchievements.includes(id);
+      const mk = monthKey || getCurrentMonthKey();
+      return (data.monthlyAchievements[mk] || []).includes(id);
+    }
+
+    function unlockAchievement(id, shiftDate, monthKey) {
+      if (isPermanentAchievement(id)) {
+        if (!data.permanentAchievements.includes(id)) data.permanentAchievements.push(id);
+      } else {
+        if (!data.monthlyAchievements[monthKey]) data.monthlyAchievements[monthKey] = [];
+        if (!data.monthlyAchievements[monthKey].includes(id)) data.monthlyAchievements[monthKey].push(id);
+      }
+      const exists = data.achievementLog.some(
+        (e) => e.id === id && e.shiftDate === shiftDate && e.monthKey === monthKey
+      );
+      if (!exists) data.achievementLog.push({ id, shiftDate, monthKey });
+    }
+
+    function getShiftsInMonth(monthKey) {
+      return data.shifts.filter((s) => s.date && s.date.startsWith(monthKey));
+    }
+
+    function getLongestStreakInMonth(monthKey) {
+      const dates = [...new Set(getShiftsInMonth(monthKey).map((s) => s.date))].sort();
+      if (!dates.length) return 0;
+      let max = 1;
+      let cur = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const diff = (parseDateKey(dates[i]) - parseDateKey(dates[i - 1])) / 86400000;
+        if (diff === 1) { cur++; max = Math.max(max, cur); }
+        else if (diff > 1) cur = 1;
+      }
+      return max;
+    }
+
+    function getAchievementIconsMap(monthKey) {
+      const map = {};
+      data.achievementLog.forEach((e) => {
+        if (!e.shiftDate || !e.shiftDate.startsWith(monthKey)) return;
+        const ach = ACHIEVEMENTS.find((a) => a.id === e.id);
+        if (!ach) return;
+        if (!map[e.shiftDate]) map[e.shiftDate] = [];
+        if (!map[e.shiftDate].includes(ach.icon)) map[e.shiftDate].push(ach.icon);
+      });
+      return map;
+    }
+
+    function isCurrentView() {
+      const n = getNow();
+      return viewYear === n.year && viewMonth === n.month;
+    }
+
+    function isPastView() {
+      const n = getNow();
+      return viewYear < n.year || (viewYear === n.year && viewMonth < n.month);
+    }
+
+    function isFutureView() {
+      const n = getNow();
+      return viewYear > n.year || (viewYear === n.year && viewMonth > n.month);
+    }
+
+    function formatMoney(v) {
+      return new Intl.NumberFormat("ru-RU", {
+        style: "currency",
+        currency: "RUB",
+        maximumFractionDigits: 0,
+      }).format(v);
+    }
+
+    function formatCalendarNum(v) {
+      return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Math.round(v));
+    }
+
+    function parseDateKey(key) {
+      const [y, m, d] = key.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function toDateKey(date) {
+      return date.toLocaleDateString("sv-SE");
+    }
+
+    function getDefaultHours(dateKey) {
+      const day = parseDateKey(dateKey).getDay();
+      if (day === 5 || day === 6) return 13;
+      return 12;
+    }
+
+    function getMonthBounds(year, month) {
+      return {
+        min: toDateKey(new Date(year, month, 1)),
+        max: toDateKey(new Date(year, month + 1, 0)),
+      };
+    }
+
+    function getBoundsForDateKey(dateKey) {
+      const d = parseDateKey(dateKey);
+      return getMonthBounds(d.getFullYear(), d.getMonth());
+    }
+
+    function migrateGoLists(parsed) {
+      const monthly = parsed.monthlyGoList && typeof parsed.monthlyGoList === "object"
+        ? { ...parsed.monthlyGoList }
+        : {};
+      if (Array.isArray(parsed.goLists)) {
+        parsed.goLists.forEach((g) => {
+          if (!g.date) return;
+          const key = g.date.slice(0, 7);
+          monthly[key] = (monthly[key] || 0) + (g.amount || 0);
+        });
+      }
+      return monthly;
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const ach = migrateAchievements(parsed);
+        data = {
+          hourlyRate: parsed.hourlyRate ?? 250,
+          shifts: Array.isArray(parsed.shifts) ? parsed.shifts : [],
+          monthlyGoList: migrateGoLists(parsed),
+          permanentAchievements: ach.permanentAchievements,
+          monthlyAchievements: ach.monthlyAchievements,
+          achievementLog: ach.achievementLog,
+        };
+      } catch (_) {}
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getRate() {
+      const r = parseFloat($("hourly-rate").value);
+      return Number.isFinite(r) && r >= 0 ? r : data.hourlyRate;
+    }
+
+    function shiftSalary(hours) {
+      return getRate() * hours;
+    }
+
+    function shiftTotal(shift) {
+      return shiftSalary(shift.hours) + (shift.tips || 0);
+    }
+
+    function getShiftByDate(dateKey) {
+      return data.shifts.find((s) => s.date === dateKey);
+    }
+
+    function getMonthShifts() {
+      const prefix = getViewMonthKey();
+      return data.shifts.filter((s) => s.date && s.date.startsWith(prefix));
+    }
+
+    function getMonthGo() {
+      return data.monthlyGoList[getViewMonthKey()] || 0;
+    }
+
+    function getTotalGoSum() {
+      return Object.values(data.monthlyGoList).reduce((a, v) => a + (v || 0), 0);
+    }
+
+    function getAllTimeEarnings() {
+      let sum = data.shifts.reduce((a, s) => a + shiftTotal(s), 0);
+      sum += getTotalGoSum();
+      return sum;
+    }
+
+    function getMonthEarnings() {
+      const shiftsSum = getMonthShifts().reduce((a, s) => a + shiftTotal(s), 0);
+      const goSum = getMonthGo();
+      return { shiftsSum, goSum, total: shiftsSum + goSum };
+    }
+
+    function getLongestStreak() {
+      const dates = [...new Set(data.shifts.map((s) => s.date))].sort();
+      if (!dates.length) return 0;
+      let max = 1;
+      let cur = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const diff = (parseDateKey(dates[i]) - parseDateKey(dates[i - 1])) / 86400000;
+        if (diff === 1) { cur++; max = Math.max(max, cur); }
+        else if (diff > 1) cur = 1;
+      }
+      return max;
+    }
+
+    function getRank(n) {
+      for (const r of RANKS) {
+        if (n >= r.min && n <= r.max) return r.label;
+      }
+      return RANKS[0].label;
+    }
+
+    function achievementProgress(id) {
+      const monthKey = getCurrentMonthKey();
+      const monthShifts = getShiftsInMonth(monthKey);
+      const monthCount = monthShifts.length;
+      const totalShifts = data.shifts.length;
+      const allEarn = getAllTimeEarnings();
+      const goSum = getTotalGoSum();
+      const streakMonth = getLongestStreakInMonth(monthKey);
+      const maxTipsMonth = monthShifts.reduce((m, s) => Math.max(m, s.tips || 0), 0);
+      switch (id) {
+        case "first-shift": return { cur: monthCount, max: 1 };
+        case "five-shifts": return { cur: monthCount, max: 5 };
+        case "ten-shifts": return { cur: monthCount, max: 10 };
+        case "soundtrack": return { cur: monthCount, max: 15 };
+        case "last-track": return { cur: totalShifts, max: 30 };
+        case "tips-rain": return { cur: maxTipsMonth > 3000 ? 1 : 0, max: 1 };
+        case "golden-tray": return { cur: maxTipsMonth > 5000 ? 1 : 0, max: 1 };
+        case "bug-report": return { cur: monthShifts.some((s) => (s.tips ?? 0) < 500) ? 1 : 0, max: 1 };
+        case "week-streak": return { cur: streakMonth, max: 7 };
+        case "go-million": return { cur: goSum, max: 10000 };
+        case "hello-world": return { cur: allEarn, max: 50000 };
+        case "production": return { cur: allEarn, max: 100000 };
+        case "sponsor": return { cur: allEarn, max: 200000 };
+        default: return { cur: 0, max: 1 };
+      }
+    }
+
+    function getRecordTipsInfo() {
+      if (!data.shifts.length) return { maxTips: 0, dates: [], icon: "" };
+      const maxTips = Math.max(...data.shifts.map((s) => s.tips || 0));
+      if (maxTips <= 0) return { maxTips: 0, dates: [], icon: "" };
+      const dates = [
+        ...new Set(
+          data.shifts.filter((s) => (s.tips || 0) === maxTips).map((s) => s.date)
+        ),
+      ];
+      const icon = maxTips >= 5000 ? "💎" : "🔥";
+      return { maxTips, dates, icon };
+    }
+
+    function fireConfetti(x, y) {
+      const layer = $("confetti-layer");
+      const colors = ["#0a84ff", "#30d158", "#ff9f0a", "#bf5af2", "#64d2ff", "#ffffff"];
+      const count = 22;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement("div");
+        p.className = "confetti-particle";
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+        const dist = 40 + Math.random() * 70;
+        p.style.left = x + "px";
+        p.style.top = y + "px";
+        p.style.background = colors[i % colors.length];
+        p.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+        p.style.setProperty("--dy", Math.sin(angle) * dist + 30 + Math.random() * 40 + "px");
+        p.style.animationDelay = Math.random() * 0.08 + "s";
+        layer.appendChild(p);
+        setTimeout(() => p.remove(), 1300);
+      }
+    }
+
+    function checkAchievements(shiftDate) {
+      const monthKey = shiftDate ? shiftDate.slice(0, 7) : getCurrentMonthKey();
+      const logDate = shiftDate || toDateKey(new Date());
+      const monthShifts = getShiftsInMonth(monthKey);
+      const monthCount = monthShifts.length;
+      const totalShifts = data.shifts.length;
+      const allEarn = getAllTimeEarnings();
+      const goSum = getTotalGoSum();
+      const streakMonth = getLongestStreakInMonth(monthKey);
+      const trigger = shiftDate ? monthShifts.find((s) => s.date === shiftDate) : null;
+      const triggerTips = trigger ? (trigger.tips || 0) : 0;
+      const maxTipsMonth = monthShifts.reduce((m, s) => Math.max(m, s.tips || 0), 0);
+
+      const checks = {
+        "first-shift": monthCount >= 1,
+        "five-shifts": monthCount >= 5,
+        "ten-shifts": monthCount >= 10,
+        "soundtrack": monthCount >= 15,
+        "last-track": totalShifts >= 30,
+        "tips-rain": triggerTips > 3000 || maxTipsMonth > 3000,
+        "golden-tray": triggerTips > 5000 || maxTipsMonth > 5000,
+        "bug-report": triggerTips < 500 || monthShifts.some((s) => (s.tips ?? 0) < 500),
+        "week-streak": streakMonth >= 7,
+        "go-million": goSum > 10000,
+        "hello-world": allEarn > 50000,
+        "production": allEarn > 100000,
+        "sponsor": allEarn > 200000,
+      };
+
+      const unlocked = [];
+      for (const [id, ok] of Object.entries(checks)) {
+        if (ok && !hasAchievement(id, isPermanentAchievement(id) ? null : monthKey)) {
+          unlockAchievement(id, logDate, monthKey);
+          unlocked.push(id);
+        }
+      }
+      if (unlocked.length) saveData();
+      return unlocked;
+    }
+
+    function showToast(msg) {
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.textContent = "🏆 " + msg;
+      $("toast-container").appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function toastAchievements(ids) {
+      ids.forEach((id) => {
+        const a = ACHIEVEMENTS.find((x) => x.id === id);
+        if (a) showToast(a.name + ": " + (a.caption || a.desc));
+      });
+    }
+
+    function isAchievementUnlockedForDisplay(id) {
+      if (isPermanentAchievement(id)) return data.permanentAchievements.includes(id);
+      return hasAchievement(id, getCurrentMonthKey());
+    }
+
+    function openModal(id) {
+      const el = $(id);
+      el.classList.add("open");
+      el.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const el = $(id);
+      el.classList.remove("open");
+      el.setAttribute("aria-hidden", "true");
+    }
+
+    function confirmArchive(action) {
+      if (!isPastView()) return true;
+      return confirm("Архивный месяц.\n\n" + action + "?");
+    }
+
+    function initViewMonth() {
+      const n = getNow();
+      viewYear = n.year;
+      viewMonth = n.month;
+    }
+
+    function changeMonth(delta) {
+      viewMonth += delta;
+      if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      else if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      renderAll();
+    }
+
+    function goToCurrentMonth() {
+      const n = getNow();
+      viewYear = n.year;
+      viewMonth = n.month;
+      renderAll();
+    }
+
+    function renderHeader() {
+      const n = data.shifts.length;
+      $("rank-badge").textContent = getRank(n) + " · " + n + " смен";
+    }
+
+    function renderStats() {
+      const { total, goSum } = getMonthEarnings();
+      $("stat-month-label").textContent = "Заработано в " + MONTHS[viewMonth];
+      $("stat-month").textContent = formatMoney(total);
+      $("stat-go").textContent = formatMoney(goSum);
+      $("stat-all").textContent = formatMoney(getAllTimeEarnings());
+      renderForecast();
+    }
+
+    function renderForecast() {
+      const widget = $("forecast-widget");
+      const textEl = $("forecast-text");
+
+      if (!isCurrentView()) {
+        widget.hidden = true;
+        return;
+      }
+      widget.hidden = false;
+
+      const shifts = getMonthShifts();
+      const workedDays = new Set(shifts.map((s) => s.date)).size;
+
+      if (workedDays === 0) {
+        textEl.className = "muted";
+        textEl.innerHTML = "Добавь первую смену для прогноза";
+        return;
+      }
+
+      const shiftsEarned = shifts.reduce((a, s) => a + shiftTotal(s), 0);
+      const avgDaily = shiftsEarned / workedDays;
+      const { total: earnedSoFar } = getMonthEarnings();
+
+      const now = new Date();
+      const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const todayNum = now.getDate();
+      const remainingDays = Math.max(0, lastDay - todayNum + 1);
+
+      const projected = Math.round(earnedSoFar + avgDaily * remainingDays);
+      const endLabel = lastDay + " " + MONTHS_GEN[viewMonth];
+
+      textEl.className = "";
+      textEl.innerHTML =
+        "Такими темпами к <strong>" + endLabel + "</strong> ты заработаешь примерно <strong>" +
+        formatMoney(projected) + "</strong>";
+    }
+
+    function renderMonthNav() {
+      const archive = isPastView();
+      const future = isFutureView();
+      let title = MONTHS_NOM[viewMonth] + " " + viewYear;
+      if (archive) title += " 📦";
+      $("month-title").textContent = title;
+
+      document.body.className = archive ? "mode-archive" : future ? "mode-future" : "";
+
+      const chip = $("mode-chip");
+      if (archive) {
+        chip.hidden = false;
+        chip.className = "mode-chip archive";
+        chip.textContent = "📦 Архив";
+        $("back-to-current").hidden = false;
+      } else if (future) {
+        chip.hidden = false;
+        chip.className = "mode-chip future";
+        chip.textContent = "Планирование";
+        $("back-to-current").hidden = false;
+      } else {
+        chip.hidden = true;
+        $("back-to-current").hidden = true;
+      }
+
+      const editable = !future;
+      $("fab-add").classList.toggle("hidden", !editable || !$("panel-calendar").classList.contains("active"));
+      $("save-go-btn").disabled = !editable;
+      $("go-amount").disabled = !editable;
+    }
+
+    function renderGoSection() {
+      const saved = getMonthGo();
+      $("go-saved-display").textContent = formatMoney(saved);
+      if (!isFutureView()) $("go-amount").value = saved || "";
+    }
+
+    function renderCalendar() {
+      const grid = $("cal-grid");
+      grid.innerHTML = "";
+      const todayKey = toDateKey(new Date());
+      const first = new Date(viewYear, viewMonth, 1);
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const startOffset = (first.getDay() + 6) % 7;
+      const record = getRecordTipsInfo();
+      const recordSet = new Set(record.dates);
+      const achIconsMap = getAchievementIconsMap(getViewMonthKey());
+
+      for (let i = 0; i < startOffset; i++) {
+        const pad = document.createElement("div");
+        pad.className = "cal-day other-month";
+        grid.appendChild(pad);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(viewYear, viewMonth, d);
+        const dateKey = toDateKey(date);
+        const shift = getShiftByDate(dateKey);
+        const isRecordDay = shift && recordSet.has(dateKey);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cal-day";
+        if (dateKey === todayKey) btn.classList.add("today");
+        if (isRecordDay) btn.classList.add("record-day");
+
+        let html = '<span class="num">' + d + "</span>";
+        if (isRecordDay) {
+          html += '<span class="record-badge" aria-label="Рекорд чаевых">' + record.icon + "</span>";
+        }
+        if (shift) {
+          btn.classList.add("has-shift");
+          const tips = shift.tips || 0;
+          const total = shiftTotal(shift);
+          const tipsClass = tips > 3000 ? " high" : "";
+          html +=
+            '<span class="shift-info">' +
+            '<span class="tips-amount' + tipsClass + '">' + formatCalendarNum(tips) + "</span>" +
+            '<span class="day-total">Σ ' + formatCalendarNum(total) + "</span></span>";
+        } else {
+          btn.classList.add("empty");
+        }
+        const dayIcons = achIconsMap[dateKey];
+        if (dayIcons && dayIcons.length) {
+          html += '<span class="ach-icons">' +
+            dayIcons.map((ic) => '<span class="ach-icon">' + ic + "</span>").join("") +
+            "</span>";
+        }
+        btn.innerHTML = html;
+
+        btn.addEventListener("click", (e) => {
+          if (isRecordDay) {
+            const rect = btn.getBoundingClientRect();
+            fireConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+          }
+          if (shift) openDetailModal(shift.id);
+          else if (!isFutureView()) openAddModal(dateKey);
+        });
+
+        grid.appendChild(btn);
+      }
+
+      $("calendar-panel").style.opacity = isPastView() ? "0.88" : isFutureView() ? "0.92" : "1";
+    }
+
+    function renderAchievements() {
+      const grid = $("achievements-grid");
+      grid.innerHTML = "";
+      ACHIEVEMENTS.forEach((ach) => {
+        const unlocked = isAchievementUnlockedForDisplay(ach.id);
+        const prog = achievementProgress(ach.id);
+        let progressBlock = "";
+        if (!unlocked && prog.max > 1) {
+          const pct = Math.min(100, Math.round((prog.cur / prog.max) * 100));
+          let pt = "";
+          if (["go-million", "hello-world", "production", "sponsor"].includes(ach.id)) {
+            pt = formatMoney(prog.cur) + " / " + formatMoney(prog.max);
+          } else pt = prog.cur + " / " + prog.max;
+          progressBlock =
+            '<div class="neo-progress"><div class="neo-progress-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="progress-text">' + pt + "</div>";
+        }
+        const eternalBadge = ach.eternal ? '<span class="badge-eternal">навсегда</span>' : "";
+        const card = document.createElement("div");
+        card.className = "achievement-card " + (unlocked ? "unlocked" : "locked");
+        card.innerHTML =
+          '<div class="icon">' + ach.icon + "</div>" +
+          '<div class="name">' + ach.name + "</div>" +
+          '<div class="caption">' + ach.caption + "</div>" +
+          eternalBadge + progressBlock;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderAll() {
+      renderHeader();
+      renderStats();
+      renderMonthNav();
+      renderGoSection();
+      renderCalendar();
+      renderAchievements();
+    }
+
+    function updateAddDayHint() {
+      const key = $("add-date").value;
+      if (!key) { $("add-day-hint").textContent = ""; return; }
+      const day = parseDateKey(key).getDay();
+      const h = getDefaultHours(key);
+      $("add-day-hint").textContent = WEEKDAYS_FULL[day] + " · по умолчанию " + h + " ч";
+      if (!addHoursManual) $("add-hours").value = h;
+    }
+
+    function openAddModal(prefillDate, options) {
+      options = options || {};
+      if (isFutureView() && !options.fromTemplate) return;
+
+      const today = toDateKey(new Date());
+      const dateKey = options.fromTemplate ? today : (prefillDate || (
+        today >= getMonthBounds(viewYear, viewMonth).min &&
+        today <= getMonthBounds(viewYear, viewMonth).max
+          ? today
+          : getMonthBounds(viewYear, viewMonth).min
+      ));
+
+      const bounds = getBoundsForDateKey(dateKey);
+      $("add-date").min = bounds.min;
+      $("add-date").max = bounds.max;
+      $("add-date").value = dateKey;
+
+      if (options.hours != null) {
+        addHoursManual = true;
+        $("add-hours").value = options.hours;
+        const label = options.templateLabel || "";
+        $("add-day-hint").textContent = label
+          ? label + " · " + options.hours + " ч"
+          : "Шаблон · " + options.hours + " ч";
+      } else {
+        addHoursManual = false;
+        updateAddDayHint();
+      }
+
+      $("add-tips").value = "";
+      openModal("modal-add");
+
+      if (options.focusTips) {
+        setTimeout(() => $("add-tips").focus(), 120);
+      }
+    }
+
+    function openAddModalFromTemplate(hours, label) {
+      if (!isCurrentView()) goToCurrentMonth();
+      openAddModal(null, {
+        fromTemplate: true,
+        hours: hours,
+        templateLabel: label,
+        focusTips: true,
+      });
+    }
+
+    function openDetailModal(shiftId) {
+      const shift = data.shifts.find((s) => s.id === shiftId);
+      if (!shift) return;
+      selectedShiftId = shiftId;
+      const d = parseDateKey(shift.date);
+      const salary = shiftSalary(shift.hours);
+      const total = shiftTotal(shift);
+      $("modal-detail-title").textContent = d.toLocaleDateString("ru-RU", {
+        day: "numeric", month: "long", year: "numeric",
+      });
+      $("detail-rows").innerHTML =
+        '<div class="detail-row"><span>День недели</span><span>' + WEEKDAYS_FULL[d.getDay()] + "</span></div>" +
+        '<div class="detail-row"><span>Часы</span><span>' + shift.hours + " ч</span></div>" +
+        '<div class="detail-row"><span>Ставка</span><span>' + formatMoney(getRate()) + "/ч</span></div>" +
+        '<div class="detail-row"><span>Зарплата</span><span>' + formatMoney(salary) + "</span></div>" +
+        '<div class="detail-row"><span>Чаевые</span><span>' + formatMoney(shift.tips || 0) + "</span></div>" +
+        '<div class="detail-row total"><span>Итого</span><span>' + formatMoney(total) + "</span></div>";
+      openModal("modal-detail");
+    }
+
+    function addShift() {
+      if (isFutureView()) return;
+      if (!confirmArchive("Добавить смену")) return;
+
+      const dateKey = $("add-date").value;
+      const bounds = getBoundsForDateKey(dateKey);
+      if (!dateKey || dateKey < bounds.min || dateKey > bounds.max) {
+        alert("Выбери корректную дату смены.");
+        return;
+      }
+      const hours = parseFloat($("add-hours").value);
+      const tips = Math.max(0, parseFloat($("add-tips").value) || 0);
+      if (!Number.isFinite(hours) || hours <= 0) {
+        alert("Укажи длительность смены.");
+        return;
+      }
+
+      const existing = data.shifts.findIndex((s) => s.date === dateKey);
+      if (existing >= 0) {
+        if (!confirm("На эту дату уже есть смена. Заменить?")) return;
+        data.shifts[existing] = { ...data.shifts[existing], hours, tips };
+      } else {
+        data.shifts.push({ id: uid(), date: dateKey, hours, tips });
+      }
+
+      data.hourlyRate = getRate();
+      saveData();
+      closeModal("modal-add");
+      const unlocked = checkAchievements(dateKey);
+      toastAchievements(unlocked);
+      renderAll();
+    }
+
+    function deleteShift() {
+      if (!selectedShiftId) return;
+      if (!confirmArchive("Удалить смену")) return;
+      if (!confirm("Удалить эту смену?")) return;
+      const removed = data.shifts.find((s) => s.id === selectedShiftId);
+      data.shifts = data.shifts.filter((s) => s.id !== selectedShiftId);
+      if (removed) {
+        data.achievementLog = data.achievementLog.filter((e) => e.shiftDate !== removed.date);
+      }
+      saveData();
+      closeModal("modal-detail");
+      selectedShiftId = null;
+      renderAll();
+    }
+
+    function saveGoList() {
+      if (isFutureView()) return;
+      if (!confirmArchive("Сохранить гоу-лист")) return;
+      const amount = parseFloat($("go-amount").value);
+      if (!Number.isFinite(amount) || amount < 0) {
+        alert("Введи корректную сумму (0 или больше).");
+        return;
+      }
+      data.monthlyGoList[getViewMonthKey()] = amount;
+      data.hourlyRate = getRate();
+      saveData();
+      const unlocked = checkAchievements(toDateKey(new Date()));
+      toastAchievements(unlocked);
+      renderAll();
+    }
+
+    function resetAll() {
+      if (!confirm("Удалить все смены, гоу-листы и достижения?")) return;
+      if (!confirm("Точно? Восстановить будет нельзя.")) return;
+      data = {
+        hourlyRate: 250,
+        shifts: [],
+        monthlyGoList: {},
+        permanentAchievements: [],
+        monthlyAchievements: {},
+        achievementLog: [],
+      };
+      saveData();
+      $("hourly-rate").value = 250;
+      goToCurrentMonth();
+    }
+
+    document.querySelectorAll(".segmented button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".segmented button").forEach((b) => {
+          b.classList.remove("active");
+          b.setAttribute("aria-selected", "false");
+        });
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+        document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+        $("panel-" + btn.dataset.tab).classList.add("active");
+        $("fab-add").classList.toggle("hidden", btn.dataset.tab !== "calendar" || isFutureView());
+      });
+    });
+
+    $("month-prev").addEventListener("click", () => changeMonth(-1));
+    $("month-next").addEventListener("click", () => changeMonth(1));
+    $("back-to-current").addEventListener("click", goToCurrentMonth);
+    $("hourly-rate").addEventListener("input", () => {
+      data.hourlyRate = getRate();
+      saveData();
+      renderStats();
+      renderCalendar();
+    });
+    $("fab-add").addEventListener("click", () => openAddModal());
+    document.querySelectorAll(".shift-template-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const hours = parseFloat(btn.dataset.hours);
+        openAddModalFromTemplate(hours, btn.dataset.label || "");
+      });
+    });
+    $("add-date").addEventListener("change", () => { addHoursManual = false; updateAddDayHint(); });
+    $("add-hours").addEventListener("input", () => { addHoursManual = true; });
+    $("add-tips").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addShift();
+    });
+    $("confirm-add-btn").addEventListener("click", addShift);
+    $("delete-shift-btn").addEventListener("click", deleteShift);
+    $("save-go-btn").addEventListener("click", saveGoList);
+    $("reset-all-btn").addEventListener("click", resetAll);
+
+    document.querySelectorAll("[data-close]").forEach((btn) => {
+      btn.addEventListener("click", () => closeModal(btn.dataset.close));
+    });
+
+    document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal(backdrop.id);
+      });
+    });
+
+    loadData();
+    initViewMonth();
+    $("hourly-rate").value = data.hourlyRate;
+    renderAll();
+    checkAchievements(toDateKey(new Date()));
+  </script>
+</body>
+</html>

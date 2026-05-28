@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <!-- Градиент для фона -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2C2C2E;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1C1C1E;stop-opacity:1" />
+    </linearGradient>
+    <!-- Тень для неоморфизма -->
+    <filter id="neumorph-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="3" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.5" />
+      <feDropShadow dx="-2" dy="-2" stdDeviation="3" flood-color="#ffffff" flood-opacity="0.05" />
+    </filter>
+  </defs>
+
+  <!-- Фон иконки -->
+  <rect width="180" height="180" rx="40" fill="url(#bgGrad)" filter="url(#neumorph-shadow)"/>
+
+  <!-- Внутренний круг-подложка для иконки -->
+  <circle cx="90" cy="88" r="55" fill="#1C1C1E" filter="url(#neumorph-shadow)"/>
+  
+  <!-- Знак доллара (золотой) -->
+  <text x="90" y="105" font-family="Arial, sans-serif" font-weight="bold" font-size="70" 
+        fill="#FFD700" text-anchor="middle" filter="url(#neumorph-shadow)">$</text>
+
+  <!-- Маленькая иконка графика внизу (намек на трекинг) -->
+  <polyline points="50,145 70,130 85,138 105,110 125,120 145,100" 
+            fill="none" stroke="#30D158" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" 
+            filter="url(#neumorph-shadow)"/>
+</svg>
